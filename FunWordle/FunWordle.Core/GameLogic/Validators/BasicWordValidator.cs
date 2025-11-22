@@ -1,5 +1,6 @@
 ﻿
 
+using FunWordle.Core.Interfaces.DataProvider;
 using FunWordle.Core.Interfaces.Validators;
 using FunWordle.Core.Models;
 
@@ -7,11 +8,11 @@ namespace FunWordle.Core.GameLogic.Validators
 {
     public class BasicWordValidator:IWordValidator
     {
-        private ISet<string> _wordList;
+        private IWordListProvider _provider;
 
-        public BasicWordValidator(ISet<string> wordList)
+        public BasicWordValidator(IWordListProvider provider)
         {
-            _wordList = wordList;
+            _provider = provider;
         }
 
         public GuessValidationResult Validate(string input)
@@ -27,7 +28,7 @@ namespace FunWordle.Core.GameLogic.Validators
             if (!guess.All(char.IsLetter))
                 return new GuessValidationResult(GuessValidationError.NonAlphabetic);
 
-            if (!_wordList.Contains(guess))
+            if (!_provider.WordList.Contains(guess))
                 return new GuessValidationResult(GuessValidationError.NotInDictionary, guess);
 
             return new GuessValidationResult(GuessValidationError.Correct, guess);
