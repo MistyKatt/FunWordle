@@ -9,6 +9,6 @@ namespace FunWordle.Core.Interfaces.Evalidator
 {
     public interface IWordEvaluator
     {
-        GuessResult EvaluateGuess(string input);
+        GuessResult EvaluateGuess(string input, string answer);
     }
 }

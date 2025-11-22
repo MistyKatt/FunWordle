@@ -11,20 +11,14 @@ namespace FunWordle.Core.GameLogic.Calculator.Strategy
 {
     public class TimeCalculateStrategy : ICalculateStrategy
     {
-        private int _timer;
         private readonly int _match = 200;
         private readonly int _exist = 50;
-
-        public TimeCalculateStrategy(int timer)
-        {
-            _timer = timer;
-        }
-        public int Calculate(int max, GuessResult guess)
+        public int Calculate(int max, int time, GuessResult guess)
         {
             if (guess is null) throw new ArgumentNullException(nameof(guess));
             if (guess.IsWin)
             {
-                return _match * 5 + _timer;
+                return _match * 5 + time;
             }
             var scores = guess.Scores;
             var currentScore = 0;

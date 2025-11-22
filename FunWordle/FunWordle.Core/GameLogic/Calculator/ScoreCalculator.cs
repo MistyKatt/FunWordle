@@ -14,9 +14,9 @@ namespace FunWordle.Core.GameLogic.Calculator
             }
         }
 
-        public int CalculateScore(int time, GuessResult guessResult)
+        public int CalculateScore(int max, int time, GuessResult guessResult)
         {
-            return _strategy.Calculate(time, guessResult);
+            return _strategy.Calculate(max, time, guessResult);
         }
     }
 }
