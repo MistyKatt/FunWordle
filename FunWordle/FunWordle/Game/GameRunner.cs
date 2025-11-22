@@ -117,7 +117,9 @@ namespace FunWordle.Cli.Game
             }
             Console.WriteLine($"The remained guessed count is {_board.Count}");
             Console.WriteLine($"The current score is {_board.Score}");
-            GuessHistory();
+            Console.WriteLine($"The remained time is {_board.RemainedTime()}");
+            if ( _board.Guesses.Count > 0 ) 
+                GuessHistory();
             Console.WriteLine($"Please make the next guess");
             string? guess = Console.ReadLine();
             try
@@ -135,7 +137,9 @@ namespace FunWordle.Cli.Game
             Console.WriteLine(isWin
             ? $"Congratulations! You won! Score = {_board.Score}"
             : $"Unfortunately, You lost. Score = {_board.Score}");
-
+            Console.WriteLine($"The remained time is {_board.RemainedTime()}");
+            if(!isWin)
+                Console.WriteLine($"The correct answer is {_board.GetAnswer()}");
             GuessHistory();
             Console.WriteLine("Press any key to restart...");
             Console.ReadKey();

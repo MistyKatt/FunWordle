@@ -1,11 +1,11 @@
 ﻿// FunWordle.CLI/GameBoard.cs
-using FunWordle.Core;
+using FunWordle.Cli.Services.AppSettings;
 using FunWordle.Core.GameLogic.Calculator;
+using FunWordle.Core.Interfaces.DataProvider;
 using FunWordle.Core.Interfaces.Evalidator;
 using FunWordle.Core.Interfaces.Validators;
 using FunWordle.Core.Models;
-using System;
-using System.Collections.Generic;
+using System.Diagnostics;
 
 namespace FunWordle.Cli;
 
@@ -25,49 +25,44 @@ public sealed class GameBoard
 {
     public int Score { get; private set; } = 0;
     public List<GuessHistoryEntry> Guesses { get; } = new();
-    public string Answer { get; private set; }   
-    public int Time { get; private set; }        
-    public int Count { get; private set; }       
+    public int Count { get; private set; }
     public HashSet<string> WordList { get; }
 
     public bool IsFinished => Count <= 0 || (Guesses.Count > 0 && LastGuess.IsWin);
 
-    public GuessResult LastGuess => _lastGuess ?? throw new InvalidOperationException("No guesses yet.");
+    public GuessResult? LastGuess => _lastGuess ?? null;
     private GuessResult? _lastGuess;
 
     private IWordValidator _wordValidator;
     private IWordEvaluator _wordEvaluator;
+    private IWordListProvider _wordListProvider;
     private ScoreCalculator _scoreCalculator;
+    private Stopwatch _stopwatch;
+    private WordleConfig _wordleConfig;
+    private string _answer;
+    private int _max = 0;
 
     public GameBoard(
         HashSet<string> wordList,
-        string answer,
         int initialTimeSeconds,
         int maxGuessCount,
         IWordValidator wordValidator,
         IWordEvaluator wordEvaluator,
-        ScoreCalculator scoreCalculator)
+        IWordListProvider wordListProvider,
+        ScoreCalculator scoreCalculator,
+        WordleConfig wordleConfig,
+        string answer)
     {
         WordList = wordList ?? throw new ArgumentNullException(nameof(wordList));
-        Answer = (answer ?? throw new ArgumentNullException(nameof(answer))).ToUpperInvariant();
         _wordValidator = wordValidator;
-        if (Answer.Length != 5)
-            throw new ArgumentException("Answer must be 5 letters.", nameof(answer));
-
-        Time = initialTimeSeconds;
+        _wordEvaluator = wordEvaluator;
+        _wordListProvider = wordListProvider;
         Count = maxGuessCount;
         _scoreCalculator = scoreCalculator;
+        _stopwatch = new Stopwatch();
+        _wordleConfig = wordleConfig;
+        _answer = answer;
     }
-
-    /// <summary>
-    /// Decrease timer by one second. You can call this from a timer or loop.
-    /// </summary>
-    public void Tick()
-    {
-        if (Time > 0)
-            Time--;
-    }
-
     /// <summary>
     /// Process a raw user guess string: validate, evaluate, update state.
     /// Throws on invalid input; CLI should catch and show friendly messages.
@@ -84,26 +79,47 @@ public sealed class GameBoard
             throw new InvalidGuessException(validation.Error);
         }
 
-        var result = _wordEvaluator.EvaluateGuess(rawGuess);
+        var result = _wordEvaluator.EvaluateGuess(validation.NormalizedGuess, _answer);
 
         _lastGuess = result;
         var entry = new GuessHistoryEntry(result, Guesses.Count + 1);
         Guesses.Add(entry);
         Count--;
 
-        Score = _scoreCalculator.CalculateScore(Time, result);
-
+        Score = _scoreCalculator.CalculateScore(_max,RemainedTime(), result);
+        _max = Math.Max(Score, _max);
         return result;
     }
 
     public void Initialize()
     {
-        Time = 1000;
         Score = 0;
         _lastGuess = null;
-        Count = 6;
+        Count = _wordleConfig.MaxGuessCount;
         Guesses.Clear();
+        ResetAnswer();
+        _stopwatch.Restart();
     }
+
+    public int RemainedTime()
+    {
+        return Math.Max(0,_wordleConfig.InitialTimeSeconds - (int)_stopwatch.Elapsed.TotalSeconds);
+    }
+
+    public string GetAnswer()
+    {
+        return _answer;
+    }
+    private void ResetAnswer()
+    {
+        
+        var range = _wordListProvider.WordList.Count;
+        var index = new Random().Next(range);
+        var answer = _wordListProvider.WordList[index];
+        _answer = answer;
+    }
+
+   
 }
 
 /// <summary>
