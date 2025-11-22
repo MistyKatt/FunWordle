@@ -36,7 +36,7 @@ namespace FunWordle.Cli.Services.Extensions
             });
 
             services.AddSingleton<TimeCalculateStrategy>(_ =>
-                new TimeCalculateStrategy(config.InitialTimeSeconds));
+                new TimeCalculateStrategy());
 
             services.AddSingleton(sp =>
             {
