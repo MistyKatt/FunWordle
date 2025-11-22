@@ -95,6 +95,15 @@ public sealed class GameBoard
 
         return result;
     }
+
+    public void Initialize()
+    {
+        Time = 1000;
+        Score = 0;
+        _lastGuess = null;
+        Count = 6;
+        Guesses.Clear();
+    }
 }
 
 /// <summary>
