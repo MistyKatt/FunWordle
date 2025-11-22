@@ -21,7 +21,7 @@ namespace FunWordle.Core.GameLogic.Calculator.Strategy
         }
         public int Calculate(int max, GuessResult guess)
         {
-            if (guess is null) throw new ArgumentException(nameof(guess));
+            if (guess is null) throw new ArgumentNullException(nameof(guess));
             if (guess.IsWin)
             {
                 return _match * 5 + _timer;
