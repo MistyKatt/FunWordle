@@ -9,6 +9,6 @@ namespace FunWordle.Core.Interfaces.Calculate
 {
     public interface ICalculateStrategy
     {
-        int Calculate(int max, GuessResult guess);
+        int Calculate(int max, int time, GuessResult guess);
     }
 }

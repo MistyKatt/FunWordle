@@ -1,37 +1,32 @@
 ﻿using FunWordle.Core.Interfaces.Evalidator;
 using FunWordle.Core.Models;
+using System.Globalization;
 
 namespace FunWordle.Core.GameLogic.Evaluator
 {
     public class BasicWordEvaluator : IWordEvaluator
     {
-        private string _answer;
-
-        public BasicWordEvaluator(string answer)
+        public GuessResult EvaluateGuess(string input, string answer)
         {
-            _answer = answer;
-        }
-        public GuessResult EvaluateGuess(string input)
-        {
-            if (_answer is null) throw new ArgumentNullException(nameof(_answer));
+            if (answer is null) throw new ArgumentNullException(nameof(answer));
             if (input is null) throw new ArgumentNullException(nameof(input));
-            if (_answer.Length != input.Length)
+            if (answer.Length != input.Length)
                 throw new ArgumentException("Answer and guess must have same length.");
 
-            int n = _answer.Length;
+            int n = answer.Length;
             var scores = new LetterMatch[n];
             var remainingCounts = new int[26];
 
             for (int i = 0; i < n; i++)
             {
-                if (input[i] == _answer[i])
+                if (input[i] == answer[i])
                 {
                     scores[i] = LetterMatch.Hit;
                 }
                 else
                 {
                     scores[i] = LetterMatch.Miss;
-                    int idx = _answer[i] - 'A';
+                    int idx = answer[i] - 'A';
                     if (idx is >= 0 and < 26)
                         remainingCounts[idx]++;
                 }
