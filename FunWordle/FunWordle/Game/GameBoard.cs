@@ -9,7 +9,7 @@ using System.Diagnostics;
 
 namespace FunWordle.Cli;
 
-public sealed class GuessHistoryEntry
+public class GuessHistoryEntry
 {
     public GuessResult Guess { get; }
     public int Round { get; }
@@ -21,7 +21,7 @@ public sealed class GuessHistoryEntry
     }
 }
 
-public sealed class GameBoard
+public class GameBoard
 {
     public int Score { get; private set; } = 0;
     public List<GuessHistoryEntry> Guesses { get; } = new();
