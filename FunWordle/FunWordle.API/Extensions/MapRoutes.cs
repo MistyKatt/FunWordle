@@ -1,4 +1,9 @@
-﻿using System.Runtime.CompilerServices;
+﻿using FunWordle.API.Data.Providers;
+using FunWordle.API.Models;
+using FunWordle.Cli;
+using FunWordle.Cli.Services.AppSettings;
+using Microsoft.AspNetCore.Mvc;
+using System.Runtime.CompilerServices;
 
 namespace FunWordle.API.Extensions
 {
@@ -12,41 +17,88 @@ namespace FunWordle.API.Extensions
                 {
                     MaxGuessCount = config.MaxGuessCount,
                     InitialTimeSeconds = config.InitialTimeSeconds,
-                    WordLength = config.WordLength
                 };
                 return Results.Ok(dto);
             });
 
-            app.MapGet("/api/games/{id:guid}", (Guid id, GameStore store) =>
+            app.MapGet("/api/games/{id:guid}", (Guid id, GameStoreProvider provider) =>
             {
-                if (!store.TryGet(id, out var board))
+                if (!provider.TryGet(id, out var board))
                     return Results.NotFound();
 
                 var dto = ToGameStateDto(id, board);
                 return Results.Ok(dto);
             });
 
-            // 3) Create new game (for brand new user)
-            app.MapPost("/api/games", (GameStore store) =>
+            app.MapPost("/api/games", (GameStoreProvider provider) =>
             {
-                var (id, board) = store.CreateGame();
+                var (id, board) = provider.CreateGame();
                 var dto = ToGameStateDto(id, board);
                 return Results.Ok(dto);
             });
 
-            app.MapGet("/api/games/{id:guid}/score", (Guid id, GameStore store) =>
+            app.MapPost("/api/games/{id:guid}",
+            (Guid id, [FromBody] GuessRequestDto request, GameStoreProvider provider) =>
             {
-                if (!store.TryGet(id, out var board))
+                if (!provider.TryGet(id, out var board))
                     return Results.NotFound();
 
-                var dto = new ScoreDto
+                if (string.IsNullOrWhiteSpace(request.Guess))
                 {
-                    GameId = id,
-                    Score = int.TryParse(board.Score, out var score) ? score : 0
-                };
+                    var currentState = ToGameStateDto(id, board);
+                    return Results.BadRequest(new
+                    {
+                        error = "EmptyGuess",
+                        game = currentState
+                    });
+                }
 
+                try
+                {
+                    board.MakeGuess(request.Guess);
+                }
+                catch (InvalidGuessException ex)
+                {
+                    var currentState = ToGameStateDto(id, board);
+                    return Results.BadRequest(new
+                    {
+                        error = ex.Error.ToString(), 
+                        game = currentState
+                    });
+                }
+
+                var dto = ToGameStateDto(id, board);
                 return Results.Ok(dto);
             });
+
+            static GameStateDto ToGameStateDto(Guid gameId, GameBoard board)
+            {
+                var status = GameStatusDto.InProgress;
+                if (board.LastGuess != null && board.LastGuess.IsWin)
+                    status = GameStatusDto.Win;
+                else if (board.Count <= 0)
+                    status = GameStatusDto.Lose;
+
+                var guesses = board.Guesses.Select((g, i) => new GuessResultDto
+                {
+                    Guess = g.Guess.Guess,
+                    Letters = g.Guess.Scores.Select((s, idx) => new LetterResultDto
+                    {
+                        Letter = g.Guess.Guess[idx],
+                        Match = s
+                    }).ToList()
+                }).ToList();
+
+                return new GameStateDto
+                {
+                    GameId = gameId,
+                    Guesses = guesses,
+                    RemainingGuesses = board.Count,
+                    RemainingTimeSeconds = board.RemainedTime(),
+                    Score = board.Score>=0? board.Score : 0,
+                    Status = status
+                };
+            }
 
         }
     }

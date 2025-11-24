@@ -3,7 +3,7 @@ using FunWordle.API.AppSettings;
 using FunWordle.API.Data.Providers;
 using FunWordle.API.Extensions;
 using FunWordle.API.Interfaces;
-using FunWordle.Core;
+using FunWordle.Cli.Services.AppSettings;
 using FunWordle.Core.Interfaces.DataProvider;
 using System.Text.Json;
 
