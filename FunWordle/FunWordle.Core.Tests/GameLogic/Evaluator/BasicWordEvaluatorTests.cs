@@ -5,15 +5,15 @@ namespace FunWordle.Core.Tests.Evaluation
 {
     public sealed class BasicWordEvaluatorTests
     {
-        private static BasicWordEvaluator CreateEvaluator(string answer)
-            => new BasicWordEvaluator(answer);
+        private static BasicWordEvaluator CreateEvaluator()
+            => new BasicWordEvaluator();
 
         [Fact]
         public void EvaluateGuess_AllHits_WhenGuessEqualsAnswer()
         {
-            var evaluator = CreateEvaluator("APPLE");
+            var evaluator = CreateEvaluator();
 
-            var result = evaluator.EvaluateGuess("APPLE");
+            var result = evaluator.EvaluateGuess("APPLE", "APPLE");
 
             Assert.True(result.IsWin);
             Assert.Equal(
@@ -30,9 +30,9 @@ namespace FunWordle.Core.Tests.Evaluation
         [Fact]
         public void EvaluateGuess_AllMiss_WhenNoLettersOverlap()
         {
-            var evaluator = CreateEvaluator("APPLE");
+            var evaluator = CreateEvaluator();
 
-            var result = evaluator.EvaluateGuess("BBBBB");
+            var result = evaluator.EvaluateGuess("BBBBB", "APPLE");
 
             Assert.False(result.IsWin);
             Assert.Equal(
@@ -49,9 +49,9 @@ namespace FunWordle.Core.Tests.Evaluation
         [Fact]
         public void EvaluateGuess_MarksPresent_WhenLetterExistsInDifferentPosition()
         {
-            var evaluator = CreateEvaluator("APPLE");
+            var evaluator = CreateEvaluator();
 
-            var result = evaluator.EvaluateGuess("EEEEE");
+            var result = evaluator.EvaluateGuess("EEEEE","APPLE");
 
             Assert.False(result.IsWin);
             Assert.Equal(
@@ -68,9 +68,9 @@ namespace FunWordle.Core.Tests.Evaluation
         [Fact]
         public void EvaluateGuess_DoesNotOvercountDuplicates_WhenGuessHasMoreOfLetterThanAnswer()
         {
-            var evaluator = CreateEvaluator("APPLE");
+            var evaluator = CreateEvaluator();
 
-            var result = evaluator.EvaluateGuess("PPPAP");
+            var result = evaluator.EvaluateGuess("PPPAP", "APPLE");
 
             Assert.False(result.IsWin);
             Assert.Equal(
@@ -87,9 +87,9 @@ namespace FunWordle.Core.Tests.Evaluation
         [Fact]
         public void EvaluateGuess_HandlesDuplicates_HitsTakePriorityOverPresents()
         {
-            var evaluator = CreateEvaluator("APPLE");
+            var evaluator = CreateEvaluator();
 
-            var result = evaluator.EvaluateGuess("PAPAL");
+            var result = evaluator.EvaluateGuess("PAPAL", "APPLE");
 
             Assert.False(result.IsWin);
             Assert.Equal(5, result.Scores.Length);
@@ -98,9 +98,9 @@ namespace FunWordle.Core.Tests.Evaluation
         [Fact]
         public void EvaluateGuess_IsWinFalse_WhenNotAllHits()
         {
-            var evaluator = CreateEvaluator("APPLE");
+            var evaluator = CreateEvaluator();
 
-            var result = evaluator.EvaluateGuess("APPLY"); 
+            var result = evaluator.EvaluateGuess("APPLY", "APPLE"); 
 
             Assert.False(result.IsWin);
             Assert.Equal(
@@ -117,25 +117,25 @@ namespace FunWordle.Core.Tests.Evaluation
         [Fact]
         public void EvaluateGuess_ThrowsArgumentNull_WhenInputIsNull()
         {
-            var evaluator = CreateEvaluator("APPLE");
+            var evaluator = CreateEvaluator();
 
-            Assert.Throws<ArgumentNullException>(() => evaluator.EvaluateGuess(null!));
+            Assert.Throws<ArgumentNullException>(() => evaluator.EvaluateGuess(null,"APPLE"));
         }
 
         [Fact]
         public void EvaluateGuess_ThrowsArgumentException_WhenLengthDoesNotMatchAnswer()
         {
-            var evaluator = CreateEvaluator("APPLE");
+            var evaluator = CreateEvaluator();
 
-            Assert.Throws<ArgumentException>(() => evaluator.EvaluateGuess("APP"));
-            Assert.Throws<ArgumentException>(() => evaluator.EvaluateGuess("APPLEE"));
+            Assert.Throws<ArgumentException>(() => evaluator.EvaluateGuess("APP", "APPLE"));
+            Assert.Throws<ArgumentException>(() => evaluator.EvaluateGuess("APPLEE", "APPLE"));
         }
 
         [Fact]
         public void EvaluateGuess_ThrowsArgumentNull_WhenAnswerIsNullInternally()
         {
-            var evaluator = new BasicWordEvaluator(null!);
-            Assert.Throws<ArgumentNullException>(() => evaluator.EvaluateGuess("APPLE"));
+            var evaluator = new BasicWordEvaluator();
+            Assert.Throws<ArgumentNullException>(() => evaluator.EvaluateGuess("APPLE", null));
         }
     }
 }
