@@ -1,4 +1,5 @@
-﻿using FunWordle.Cli;
+﻿using FunWordle.API.Interfaces;
+using FunWordle.Cli;
 using FunWordle.Cli.Services.AppSettings;
 using FunWordle.Core;
 using FunWordle.Core.GameLogic.Calculator;
@@ -12,7 +13,7 @@ using System.Linq;
 
 namespace FunWordle.API.Data.Providers
 {
-    public sealed class GameStoreProvider
+    public sealed class GameStoreProvider:IGameStoreProvider
     {
         private readonly ConcurrentDictionary<Guid, GameBoard> _games = new();
 

@@ -18,7 +18,7 @@ namespace FunWordle.API.Extensions
     {
         public static IServiceCollection AddCoreServices(this IServiceCollection services, WordleConfig config)
         {
-            services.AddSingleton(config);
+            services.AddSingleton<WordleConfig>(_=>config);
             
             services.AddSingleton<IWordListProvider>(_ =>
                 new FileWordListProvider(config.WordListPath));
@@ -36,8 +36,8 @@ namespace FunWordle.API.Extensions
                 var strategy = sp.GetRequiredService<TimeCalculateStrategy>();
                 return new ScoreCalculator(strategy);
             });
-         
-            services.AddSingleton<IGameStoreProvider>();
+
+            services.AddSingleton<IGameStoreProvider, GameStoreProvider>();
 
             services.ConfigureHttpJsonOptions(options =>
             {

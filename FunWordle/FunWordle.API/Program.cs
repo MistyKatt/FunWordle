@@ -1,5 +1,3 @@
-
-using FunWordle.API.AppSettings;
 using FunWordle.API.Data.Providers;
 using FunWordle.API.Extensions;
 using FunWordle.API.Interfaces;
@@ -15,7 +13,7 @@ namespace FunWordle.API
         {
             var builder = WebApplication.CreateBuilder(args);
 
-            var wordleConfig = new WordleConfig();
+            var wordleConfig = Configuration.BuildConfiguration();
             builder.Configuration.GetSection("Wordle").Bind(wordleConfig);
             builder.Services.AddCoreServices(wordleConfig);
 

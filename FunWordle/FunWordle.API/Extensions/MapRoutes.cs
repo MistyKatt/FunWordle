@@ -1,4 +1,5 @@
 ﻿using FunWordle.API.Data.Providers;
+using FunWordle.API.Interfaces;
 using FunWordle.API.Models;
 using FunWordle.Cli;
 using FunWordle.Cli.Services.AppSettings;
@@ -21,7 +22,7 @@ namespace FunWordle.API.Extensions
                 return Results.Ok(dto);
             });
 
-            app.MapGet("/api/games/{id:guid}", (Guid id, GameStoreProvider provider) =>
+            app.MapGet("/api/games/{id:guid}", (Guid id, [FromServices] IGameStoreProvider provider) =>
             {
                 if (!provider.TryGet(id, out var board))
                     return Results.NotFound();
@@ -30,7 +31,17 @@ namespace FunWordle.API.Extensions
                 return Results.Ok(dto);
             });
 
-            app.MapPost("/api/games", (GameStoreProvider provider) =>
+            app.MapPost("/api/games/{id:guid}/start", (Guid id, [FromServices] IGameStoreProvider provider) =>
+            {
+                if (!provider.TryGet(id, out var board))
+                    return Results.NotFound();
+
+                board.Initialize();
+                var dto = ToGameStateDto(id, board);
+                return Results.Ok(dto);
+            });
+
+            app.MapPost("/api/games", ([FromServices] IGameStoreProvider provider) =>
             {
                 var (id, board) = provider.CreateGame();
                 var dto = ToGameStateDto(id, board);
@@ -38,7 +49,7 @@ namespace FunWordle.API.Extensions
             });
 
             app.MapPost("/api/games/{id:guid}",
-            (Guid id, [FromBody] GuessRequestDto request, GameStoreProvider provider) =>
+            (Guid id, [FromBody] GuessRequestDto request, [FromServices] IGameStoreProvider provider) =>
             {
                 if (!provider.TryGet(id, out var board))
                     return Results.NotFound();
