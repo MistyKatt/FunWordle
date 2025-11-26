@@ -8,6 +8,7 @@ import { RulesPanel } from './components/RulesPanel';
 
 const WORD_LENGTH = 5; // fixed by game rules
 
+
 export default function HomePage() {
   const [config, setConfig] = useState<ConfigDto | null>(null);
   const [game, setGame] = useState<GameStateDto | null>(null);
@@ -78,6 +79,61 @@ export default function HomePage() {
     void load();
   }, []);
 
+  useEffect(() => {
+  if (!game || isLoading) return;
+
+  const handler = (e: KeyboardEvent) => {
+    // ignore meta/combo keys
+    if (e.metaKey || e.ctrlKey || e.altKey) return;
+
+    // ignore typing in any <input> or <textarea> if you add them in future
+    const target = e.target as HTMLElement | null;
+    if (target && (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA')) {
+      return;
+    }
+
+    if (game.status !== GameStatusDto.InProgress || game.remainingGuesses <= 0) {
+      return;
+    }
+
+    // Backspace: delete last character
+    if (e.key === 'Backspace') {
+      e.preventDefault();
+      if (!currentGuess) return;
+      const newGuess = currentGuess.slice(0, -1);
+      void handleChangeCurrentGuess(newGuess);
+      return;
+    }
+
+    // Enter: submit current guess if length OK
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      if (currentGuess.length === WORD_LENGTH) {
+        void handleSubmitCurrentGuess(currentGuess);
+      } else {
+        triggerShake(`Please enter exactly ${WORD_LENGTH} letters.`);
+      }
+      return;
+    }
+
+    // Letter keys: A-Z
+    if (/^[a-zA-Z]$/.test(e.key)) {
+      e.preventDefault();
+      if (currentGuess.length >= WORD_LENGTH) return;
+
+      const newGuess = (currentGuess + e.key.toUpperCase()).slice(0, WORD_LENGTH);
+      void handleChangeCurrentGuess(newGuess);
+
+      if (newGuess.length === WORD_LENGTH) {
+        void handleSubmitCurrentGuess(newGuess);
+      }
+    }
+  };
+
+  window.addEventListener('keydown', handler);
+  return () => window.removeEventListener('keydown', handler);
+}, [game, isLoading, currentGuess, game?.status, game?.remainingGuesses]);
+
 
   useEffect(() => {
     if (!timerActive) return;
@@ -97,7 +153,6 @@ export default function HomePage() {
     }
   }, [game]);
 
-  // ---------- handlers ----------
 
   const handleChangeCurrentGuess = async (newGuess: string) => {
     if (!game) return;
@@ -120,11 +175,11 @@ export default function HomePage() {
     setErrorMessage(null);
   };
 
-  const handleSubmitCurrentGuess = async () => {
+  const handleSubmitCurrentGuess = async (guessSubmit?:string) => {
     if (!game || !config) return;
     if (game.status !== GameStatusDto.InProgress || game.remainingGuesses <= 0) return;
 
-    const trimmed = currentGuess.trim().toUpperCase();
+    const trimmed = (guessSubmit??currentGuess).trim().toUpperCase();
 
     // 3. prevent submit if not exactly 5 chars -> shaking effect
     if (trimmed.length !== WORD_LENGTH) {
@@ -191,45 +246,41 @@ export default function HomePage() {
 
   const isFinished = game.status !== GameStatusDto.InProgress;
 
-  return (
-    <main
-      style={{
-        padding: 24,
-        maxWidth: 600,
-        margin: '0 auto',
-        fontFamily: 'system-ui, -apple-system, BlinkMacSystemFont, sans-serif',
-      }}
-    >
-      <h1 className="page-title">FunWordle</h1>
+  // AFTER
+return (
+  <main className="main-container">
+    <h1 className="page-title">FunWordle</h1>
 
-      <RulesPanel initiallyOpen />
+    <RulesPanel initiallyOpen />
 
-      <div className={isShaking ? 'shake' : ''}>
-        <GameBoard
-          game={{
-            ...game,
-            remainingTimeSeconds: visualTimeLeft,
-          }}
-          maxGuessCount={config.maxGuessCount}
-          wordLength={WORD_LENGTH}
-          currentGuess={currentGuess}
-          onChangeCurrentGuess={handleChangeCurrentGuess}
-          onSubmitCurrentGuess={handleSubmitCurrentGuess}
-          isSubmitting={isSubmitting}
-          errorMessage={errorMessage}
-        />
-      </div>
+    <div className={isShaking ? 'shake game-wrapper' : 'game-wrapper'}>
+      <GameBoard
+        game={{ ...game, remainingTimeSeconds: visualTimeLeft }}
+        maxGuessCount={config.maxGuessCount}
+        wordLength={WORD_LENGTH}
+        currentGuess={currentGuess}
+        onChangeCurrentGuess={handleChangeCurrentGuess}
+        onSubmitCurrentGuess={handleSubmitCurrentGuess}
+        isSubmitting={isSubmitting}
+        errorMessage={errorMessage}
+      />
+    </div>
 
-      <div style={{ marginTop: 16 }}>
-        <button onClick={handleRestart} disabled={isSubmitting}>
-          New Game
-        </button>
-        {isFinished && (
-          <span style={{ marginLeft: 8 }}>
-            Game finished. Start a new one to play again.
-          </span>
-        )}
-      </div>
-    </main>
-  );
+    <div className="bottom-bar">
+      <button
+        onClick={handleRestart}
+        disabled={isSubmitting}
+        className="primary-button"
+      >
+        New Game
+      </button>
+      {isFinished && (
+        <span className="bottom-text">
+          Game finished. Start a new one to play again.
+        </span>
+      )}
+    </div>
+  </main>
+);
+
 }

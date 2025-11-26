@@ -1,6 +1,7 @@
+// components/RulesPanel.tsx
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 
 export interface RulesPanelProps {
   initiallyOpen?: boolean;
@@ -8,23 +9,36 @@ export interface RulesPanelProps {
 
 export const RulesPanel: React.FC<RulesPanelProps> = ({ initiallyOpen = false }) => {
   const [open, setOpen] = useState(initiallyOpen);
+  const [maxHeight, setMaxHeight] = useState<string>('0px');
+  const contentRef = useRef<HTMLDivElement | null>(null);
+
+  // Measure content height for smooth slide
+  useEffect(() => {
+    if (!contentRef.current) return;
+    if (open) {
+      const scrollHeight = contentRef.current.scrollHeight;
+      setMaxHeight(`${scrollHeight}px`);
+    } else {
+      setMaxHeight('0px');
+    }
+  }, [open]);
 
   return (
-    <div style={{ marginBottom: 16 }}>
-      <button type="button" onClick={() => setOpen(!open)}>
-        {open ? 'Hide rules' : 'Show rules'}
+    <div className="rules-container">
+      <button
+        type="button"
+        className="rules-toggle"
+        onClick={() => setOpen(!open)}
+      >
+        <span>Game rules</span>
+        <span className="rules-toggle-icon">{open ? '▲' : '▼'}</span>
       </button>
 
-      {open && (
-        <div
-          style={{
-            marginTop: 8,
-            padding: 8,
-            borderRadius: 4,
-            border: '1px solid #4b5563',
-            fontSize: 14,
-          }}
-        >
+      <div
+        className={`rules-panel-outer ${open ? 'rules-open' : 'rules-closed'}`}
+        style={{ maxHeight }}
+      >
+        <div ref={contentRef} className="rules-panel">
           <p>Guess the 5-letter word in the allowed number of tries.</p>
           <p>
             After each guess:
@@ -36,7 +50,7 @@ export const RulesPanel: React.FC<RulesPanelProps> = ({ initiallyOpen = false })
             • <strong>Gray</strong>: letter is not in the word.
           </p>
         </div>
-      )}
+      </div>
     </div>
   );
 };

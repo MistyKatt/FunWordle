@@ -43,14 +43,6 @@ export const LetterBox: React.FC<LetterBoxProps> = ({
   isEvaluated,
   onChange,
 }) => {
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (!onChange || !isActive) return;
-
-    const raw = e.target.value;
-    const char = raw.slice(-1).toUpperCase(); // keep last typed char
-    onChange(index, char);
-  };
-
   const backgroundColor = getBackgroundColor(match, isActive, isEvaluated);
   const color = getTextColor(isEvaluated);
 
@@ -60,9 +52,9 @@ export const LetterBox: React.FC<LetterBoxProps> = ({
       inputMode="text"
       maxLength={1}
       value={value.toUpperCase()}
-      onChange={handleChange}
-      // allow focus even if not active, but only active row reacts to typing
-      disabled={false}
+      readOnly           
+      tabIndex={-1}      
+      onClick={(e) => e.preventDefault()}  
       style={{
         width: 40,
         height: 40,
