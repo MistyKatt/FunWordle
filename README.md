@@ -22,6 +22,16 @@ Task 2 extends the original Wordle logic into a full **client/server** model, en
 - Optional CLI version for Task 1 compatibility  
 - Docker / docker-compose build for one-command startup  
 
+📌 **Important Folder Structure Note**
+
+ The Git repository root contains the `.git` folder, but the actual project source code
+ (including `docker-compose.yml`) is located under the `FunWordle/` directory.
+
+ Before running any commands, make sure to navigate into the project folder:
+
+ ```bash
+ cd FunWordle
+ ```
 
 # 🐳 Run the Project Using Docker (recommended)
 
@@ -69,7 +79,7 @@ docker compose up -d
 ```bash
 cd FunWordle.API
 dotnet restore
-dotnet run --urls=http://localhost:7216
+dotnet run
 ```
 
 ## 2. Run Next.js
