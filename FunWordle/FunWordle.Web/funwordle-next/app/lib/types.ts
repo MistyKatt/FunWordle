@@ -24,6 +24,10 @@ export interface LetterResultDto {
   match: LetterMatch;    // enum value
 }
 
+export interface AnswerDTO {
+  answer:string;
+}
+
 // Matches C# GuessResultDto
 export interface GuessResultDto {
   guess: string;

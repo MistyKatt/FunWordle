@@ -31,6 +31,19 @@ namespace FunWordle.API.Extensions
                 return Results.Ok(dto);
             });
 
+            app.MapGet("/api/games/{id:guid}/answer", (Guid id, [FromServices] IGameStoreProvider provider) =>
+            {
+                if (!provider.TryGet(id, out var board))
+                    return Results.NotFound();
+                if (!board.IsFinished)
+                    return Results.Unauthorized();
+                var dto = new AnswerDTO()
+                {
+                    Answer = board.GetAnswer()
+                };
+                return Results.Ok(dto);
+            });
+
             app.MapPost("/api/games/{id:guid}/start", (Guid id, [FromServices] IGameStoreProvider provider) =>
             {
                 if (!provider.TryGet(id, out var board))

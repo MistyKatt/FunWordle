@@ -1,8 +1,8 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { getConfig, createGame, getGame, startGame, submitGuess } from './lib/api';
-import { GameStatusDto, type ConfigDto, type GameStateDto } from './lib/types';
+import { getConfig, createGame, getGame, startGame, submitGuess, getAnswer } from './lib/api';
+import { AnswerDTO, GameStatusDto, type ConfigDto, type GameStateDto } from './lib/types';
 import { GameBoard } from './components/GameBoard';
 import { RulesPanel } from './components/RulesPanel';
 
@@ -12,6 +12,7 @@ const WORD_LENGTH = 5; // fixed by game rules
 export default function HomePage() {
   const [config, setConfig] = useState<ConfigDto | null>(null);
   const [game, setGame] = useState<GameStateDto | null>(null);
+  const [answer, setAnswer] = useState<AnswerDTO | null>(null);
 
   const [currentGuess, setCurrentGuess] = useState('');
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
@@ -62,12 +63,21 @@ export default function HomePage() {
           if (typeof window !== 'undefined') {
             window.localStorage.setItem('wordle-game-id', g.gameId);
           }
+          setGame(g);
+          setVisualTimeLeft(g.remainingTimeSeconds);
+          setTimerActive(false);
+          setHasStarted(false);
         }
-
-        setGame(g);
-        setVisualTimeLeft(g.remainingTimeSeconds);
-        setTimerActive(false);
-        setHasStarted(false);
+        else
+        {
+          setGame(g);
+          setVisualTimeLeft(g.remainingTimeSeconds);
+          if(g.status!==GameStatusDto.InProgress)
+            setTimerActive(false);
+          else
+            setTimerActive(true);
+          setHasStarted(true);
+        }
         setCurrentGuess('');
       } catch (e: any) {
         setErrorMessage(e?.message ?? 'Failed to initialize game.');
@@ -153,6 +163,24 @@ export default function HomePage() {
     }
   }, [game]);
 
+  useEffect(() => {const load = async () => {
+    if (game?.status!==GameStatusDto.InProgress) {
+      let answer: AnswerDTO | null = null;
+      const storedId = typeof window !== 'undefined'
+          ? window.localStorage.getItem('wordle-game-id')
+          : null;
+      if (storedId) {
+        try {
+          answer = await getAnswer(storedId);
+        }catch {
+          answer = null;
+        }
+      }
+      setAnswer(answer);
+    }
+  }
+  load();
+  }, [game]);
 
   const handleChangeCurrentGuess = async (newGuess: string) => {
     if (!game) return;
@@ -196,7 +224,7 @@ export default function HomePage() {
       if (!result.ok) {
         // 4. failed validation on server -> shaking
         setGame(result.game);
-        triggerShake(result.error);
+        triggerShake("Please enter a valid 5-letter English word");
         return;
       }
 
@@ -267,19 +295,27 @@ return (
     </div>
 
     <div className="bottom-bar">
-      <button
-        onClick={handleRestart}
-        disabled={isSubmitting}
-        className="primary-button"
-      >
-        New Game
-      </button>
+      <div className="mb-4">
+        <button
+          onClick={handleRestart}
+          disabled={isSubmitting}
+          className="primary-button"
+        >
+          New Game
+        </button>
+      </div>
+
       {isFinished && (
-        <span className="bottom-text">
-          Game finished. Start a new one to play again.
-        </span>
+        <div className="game-footer">
+          <p className="text-lg font-semibold text-red-600">
+            Game is finished. The answer is {answer?.answer}
+          <br/>
+            Start a new one to play again.
+          </p>
+        </div>
       )}
     </div>
+
   </main>
 );
 
