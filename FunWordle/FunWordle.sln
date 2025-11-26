@@ -14,6 +14,10 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution 
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "FunWordle.Core.Tests", "FunWordle.Core.Tests\FunWordle.Core.Tests.csproj", "{89B95925-F21F-4C02-A4EA-4D2B8568FA78}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "FunWordle.API", "FunWordle.API\FunWordle.API.csproj", "{703F6010-AF4A-408E-A8EA-4F565B3CA03F}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "FunWordle.API.Tests", "FunWordle.API.Tests\FunWordle.API.Tests.csproj", "{BDED4333-4BA6-4139-BFEC-BE151D6E2E23}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -32,6 +36,14 @@ Global
 		{89B95925-F21F-4C02-A4EA-4D2B8568FA78}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{89B95925-F21F-4C02-A4EA-4D2B8568FA78}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{89B95925-F21F-4C02-A4EA-4D2B8568FA78}.Release|Any CPU.Build.0 = Release|Any CPU
+		{703F6010-AF4A-408E-A8EA-4F565B3CA03F}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{703F6010-AF4A-408E-A8EA-4F565B3CA03F}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{703F6010-AF4A-408E-A8EA-4F565B3CA03F}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{703F6010-AF4A-408E-A8EA-4F565B3CA03F}.Release|Any CPU.Build.0 = Release|Any CPU
+		{BDED4333-4BA6-4139-BFEC-BE151D6E2E23}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{BDED4333-4BA6-4139-BFEC-BE151D6E2E23}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{BDED4333-4BA6-4139-BFEC-BE151D6E2E23}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{BDED4333-4BA6-4139-BFEC-BE151D6E2E23}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

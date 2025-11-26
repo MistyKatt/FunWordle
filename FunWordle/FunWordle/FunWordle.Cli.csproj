@@ -22,7 +22,7 @@
     <None Update="AppSettings.json">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
-    <None Update="Data\wordle-answers-alphabetical.txt">
+    <None Update="Data\console-wordle-answers-alphabetical.txt">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
   </ItemGroup>
