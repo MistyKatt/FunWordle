@@ -1,3 +1,4 @@
+// components/GuessRow.tsx
 'use client';
 
 import React from 'react';
@@ -7,7 +8,7 @@ import { LetterResultDto } from '../lib/types';
 export interface GuessRowProps {
   wordLength: number;
   guess: string;
-  results?: LetterResultDto[]; // optional until evaluated
+  results?: LetterResultDto[]; // defined for past guesses, undefined for active/empty
   isActive: boolean;
   onChangeGuess?: (newGuess: string) => void;
 }
@@ -19,7 +20,8 @@ export const GuessRow: React.FC<GuessRowProps> = ({
   isActive,
   onChangeGuess,
 }) => {
-  const chars = guess.padEnd(wordLength).split('').slice(0, wordLength);
+  const chars = guess.split('').slice(0, wordLength);
+  const isEvaluated = !!results && results.length === wordLength;
 
   const handleLetterChange = (index: number, value: string) => {
     if (!onChangeGuess) return;
@@ -41,6 +43,7 @@ export const GuessRow: React.FC<GuessRowProps> = ({
             value={chars[i] ?? ''}
             match={letterResult?.match}
             isActive={isActive}
+            isEvaluated={isEvaluated}
             onChange={handleLetterChange}
           />
         );

@@ -1,7 +1,7 @@
 'use client';
 
 import React from 'react';
-import { GameStateDto, GuessResultDto } from '../lib/types';
+import { GameStateDto, GameStatusDto, GuessResultDto } from '../lib/types';
 import { InfoBar } from './InfoBar';
 import { GuessRow } from './GuessRow';
 
@@ -27,8 +27,8 @@ export const GameBoard: React.FC<GameBoardProps> = ({
   errorMessage,
 }) => {
   const usedGuesses: GuessResultDto[] = game.guesses ?? [];
-  const remainingRowCount = Math.max(0, maxGuessCount - usedGuesses.length - (game.status === 'InProgress' ? 1 : 0));
-  const isFinished = game.status === 'Win' || game.status === 'Lose';
+  const remainingRowCount = Math.max(0, maxGuessCount - usedGuesses.length - (game.status === GameStatusDto.InProgress ? 1 : 0));
+  const isFinished = game.status === GameStatusDto.Win || game.status === GameStatusDto.Lose;
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -91,7 +91,7 @@ export const GameBoard: React.FC<GameBoardProps> = ({
 
       {isFinished && (
         <div style={{ marginTop: 12 }}>
-          {game.status === 'Win' ? (
+          {game.status === GameStatusDto.Win ? (
             <span>🎉 You won!</span>
           ) : (
             <span>💀 Game over.</span>

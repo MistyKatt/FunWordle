@@ -4,7 +4,11 @@ export interface ConfigDto {
 }
 
 // Matches C# GameStatusDto
-export type GameStatusDto = 'InProgress' | 'Win' | 'Lose';
+export enum GameStatusDto {
+  InProgress = 0,
+  Win = 1,
+  Lose = 2,
+}
 
 // Matches C# LetterMatch enum (likely serialized as numeric: 0 = Miss, 1 = Present, 2 = Hit)
 export enum LetterMatch {

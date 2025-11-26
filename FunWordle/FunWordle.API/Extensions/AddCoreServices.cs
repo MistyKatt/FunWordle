@@ -18,6 +18,18 @@ namespace FunWordle.API.Extensions
     {
         public static IServiceCollection AddCoreServices(this IServiceCollection services, WordleConfig config)
         {
+            services.AddCors(options =>
+            {
+                options.AddPolicy("AllowNextJs",
+                    policy =>
+                    {
+                        policy.WithOrigins("http://localhost:3000")
+                              .AllowAnyHeader()
+                              .AllowAnyMethod()
+                              .AllowCredentials();
+                    });
+            });
+
             services.AddSingleton<WordleConfig>(_=>config);
             
             services.AddSingleton<IWordListProvider>(_ =>

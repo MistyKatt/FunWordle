@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { getConfig, createGame, getGame, startGame, submitGuess } from './lib/api';
-import type { ConfigDto, GameStateDto } from './lib/types';
+import { GameStatusDto, type ConfigDto, type GameStateDto } from './lib/types';
 import { GameBoard } from './components/GameBoard';
 import { RulesPanel } from './components/RulesPanel';
 
@@ -59,12 +59,12 @@ export default function HomePage() {
         if (!g) {
           g = await createGame();
           if (typeof window !== 'undefined') {
-            window.localStorage.setItem('wordle-game-id', g.GameId);
+            window.localStorage.setItem('wordle-game-id', g.gameId);
           }
         }
 
         setGame(g);
-        setVisualTimeLeft(g.RemainingTimeSeconds);
+        setVisualTimeLeft(g.remainingTimeSeconds);
         setTimerActive(false);
         setHasStarted(false);
         setCurrentGuess('');
@@ -93,7 +93,7 @@ export default function HomePage() {
   // whenever server game state changes, resync visual time
   useEffect(() => {
     if (game) {
-      setVisualTimeLeft(game.RemainingTimeSeconds);
+      setVisualTimeLeft(game.remainingTimeSeconds);
     }
   }, [game]);
 
@@ -101,14 +101,14 @@ export default function HomePage() {
 
   const handleChangeCurrentGuess = async (newGuess: string) => {
     if (!game) return;
-    if (game.Status !== 'InProgress' || game.RemainingGuesses <= 0) return;
+    if (game.status !== GameStatusDto.InProgress || game.remainingGuesses <= 0) return;
 
     // Start game on first character input
     if (!hasStarted && newGuess.length > 0) {
       try {
-        const updated = await startGame(game.GameId);
+        const updated = await startGame(game.gameId);
         setGame(updated);
-        setVisualTimeLeft(updated.RemainingTimeSeconds);
+        setVisualTimeLeft(updated.remainingTimeSeconds);
         setTimerActive(true);
         setHasStarted(true);
       } catch (e: any) {
@@ -122,7 +122,7 @@ export default function HomePage() {
 
   const handleSubmitCurrentGuess = async () => {
     if (!game || !config) return;
-    if (game.Status !== 'InProgress' || game.RemainingGuesses <= 0) return;
+    if (game.status !== GameStatusDto.InProgress || game.remainingGuesses <= 0) return;
 
     const trimmed = currentGuess.trim().toUpperCase();
 
@@ -136,7 +136,7 @@ export default function HomePage() {
       setIsSubmitting(true);
       setErrorMessage(null);
 
-      const result = await submitGuess(game.GameId, trimmed);
+      const result = await submitGuess(game.gameId, trimmed);
 
       if (!result.ok) {
         // 4. failed validation on server -> shaking
@@ -149,7 +149,7 @@ export default function HomePage() {
       setGame(result.game);
       setCurrentGuess('');
 
-      if (result.game.Status !== 'InProgress') {
+      if (result.game.status !== GameStatusDto.InProgress) {
         // 6. game finished -> stop timer, no more input
         setTimerActive(false);
       }
@@ -166,11 +166,11 @@ export default function HomePage() {
       setErrorMessage(null);
       const g = await createGame();
       if (typeof window !== 'undefined') {
-        window.localStorage.setItem('wordle-game-id', g.GameId);
+        window.localStorage.setItem('wordle-game-id', g.gameId);
       }
       setGame(g);
       setCurrentGuess('');
-      setVisualTimeLeft(g.RemainingTimeSeconds);
+      setVisualTimeLeft(g.remainingTimeSeconds);
       setTimerActive(false);
       setHasStarted(false);
     } catch (e: any) {
@@ -180,18 +180,16 @@ export default function HomePage() {
     }
   };
 
-  // ---------- render ----------
-
   if (isLoading || !config || !game) {
     return (
       <main style={{ padding: 24 }}>
-        <h1>FunWordle</h1>
+        <h1 className="page-title">FunWordle</h1>
         <p>Loading...</p>
       </main>
     );
   }
 
-  const isFinished = game.Status !== 'InProgress';
+  const isFinished = game.status !== GameStatusDto.InProgress;
 
   return (
     <main
@@ -202,7 +200,7 @@ export default function HomePage() {
         fontFamily: 'system-ui, -apple-system, BlinkMacSystemFont, sans-serif',
       }}
     >
-      <h1 style={{ marginBottom: 12 }}>FunWordle</h1>
+      <h1 className="page-title">FunWordle</h1>
 
       <RulesPanel initiallyOpen />
 
@@ -210,9 +208,9 @@ export default function HomePage() {
         <GameBoard
           game={{
             ...game,
-            RemainingTimeSeconds: visualTimeLeft,
+            remainingTimeSeconds: visualTimeLeft,
           }}
-          maxGuessCount={config.MaxGuessCount}
+          maxGuessCount={config.maxGuessCount}
           wordLength={WORD_LENGTH}
           currentGuess={currentGuess}
           onChangeCurrentGuess={handleChangeCurrentGuess}

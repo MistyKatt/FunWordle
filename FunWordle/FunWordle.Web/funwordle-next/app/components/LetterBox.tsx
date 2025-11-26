@@ -1,3 +1,4 @@
+// components/LetterBox.tsx
 'use client';
 
 import React from 'react';
@@ -7,13 +8,18 @@ export interface LetterBoxProps {
   index: number;
   value: string;
   match?: LetterMatch;
-  isActive: boolean;
+  isActive: boolean;      // can user type here?
+  isEvaluated: boolean;   // is this a past guess with result?
   onChange?: (index: number, value: string) => void;
 }
 
-function getBackgroundColor(match?: LetterMatch): string {
-  if (match === undefined) return '#111827'; // neutral (dark gray)
+function getBackgroundColor(match: LetterMatch | undefined, isActive: boolean, isEvaluated: boolean): string {
+  if (!isEvaluated) {
+    // Active row or not-yet-used row
+    return isActive ? '#ffffff' : '#e5e7eb'; // white / light gray
+  }
 
+  // Evaluated (past) row -> color by match
   switch (match) {
     case LetterMatch.Hit:
       return '#22c55e'; // green
@@ -25,21 +31,28 @@ function getBackgroundColor(match?: LetterMatch): string {
   }
 }
 
+function getTextColor(isEvaluated: boolean): string {
+  return isEvaluated ? '#f9fafb' : '#111827'; // white on colored, dark on white
+}
+
 export const LetterBox: React.FC<LetterBoxProps> = ({
   index,
   value,
   match,
   isActive,
+  isEvaluated,
   onChange,
 }) => {
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (!onChange) return;
+    if (!onChange || !isActive) return;
+
     const raw = e.target.value;
-    const char = raw.slice(-1).toUpperCase(); // keep only last typed char
+    const char = raw.slice(-1).toUpperCase(); // keep last typed char
     onChange(index, char);
   };
 
-  const backgroundColor = getBackgroundColor(match);
+  const backgroundColor = getBackgroundColor(match, isActive, isEvaluated);
+  const color = getTextColor(isEvaluated);
 
   return (
     <input
@@ -48,7 +61,8 @@ export const LetterBox: React.FC<LetterBoxProps> = ({
       maxLength={1}
       value={value.toUpperCase()}
       onChange={handleChange}
-      disabled={!isActive}
+      // allow focus even if not active, but only active row reacts to typing
+      disabled={false}
       style={{
         width: 40,
         height: 40,
@@ -59,7 +73,7 @@ export const LetterBox: React.FC<LetterBoxProps> = ({
         borderRadius: 4,
         border: '1px solid #374151',
         backgroundColor,
-        color: '#f9fafb',
+        color,
       }}
     />
   );
