@@ -18,7 +18,6 @@ namespace FunWordle.API
             builder.Services.AddCoreServices(wordleConfig);
 
             var app = builder.Build();
-            app.UseHttpsRedirection();
             app.UseCors("AllowNextJs");
             app.MapHealthChecks("/health");
             app.MapAPIRoutes();

@@ -108,6 +108,7 @@ public class GameBoard
 
     public string GetAnswer()
     {
+        _stopwatch.Stop();
         return _answer;
     }
     private void ResetAnswer()
