@@ -30,6 +30,8 @@ namespace FunWordle.API.Extensions
                     });
             });
 
+            services.AddHealthChecks();           
+
             services.AddSingleton<WordleConfig>(_=>config);
             
             services.AddSingleton<IWordListProvider>(_ =>
