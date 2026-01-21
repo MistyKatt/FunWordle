@@ -2,7 +2,7 @@
 
 import { GuessResult, LetterMatch } from "@/app/domain/models/guess";
 
-export class scoreCalculator {
+export class ScoreCalculator {
   private readonly match = 200;
   private readonly exist = 50;
 
