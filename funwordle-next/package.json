@@ -10,7 +10,7 @@
     "dev:debug": "cross-env NODE_OPTIONS=--inspect=9231 next dev"
   },
   "dependencies": {
-    "next": "16.0.4",
+    "next": "16.0.10",
     "react": "19.2.0",
     "react-dom": "19.2.0"
   },
