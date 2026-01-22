@@ -1,12 +1,12 @@
 // src/domain/wordle/game/gameStoreProvider.ts
 
 import crypto from "node:crypto";
-import type { WordListProvider } from "@/app/domain/providers/wordlistProvider";
-import type { WordleConfig } from "@/app/domain/models/wordleConfig";
-import { BasicWordValidator } from "@/app/domain/services/wordValidator";
-import { BasicWordEvaluator } from "@/app/domain/services/wordEvaluator";
-import { ScoreCalculator } from "@/app/domain/services/scoreCalculator";
-import { GameBoard } from "./gameboard";
+import { WordListProvider, wordListProvider } from "@/app/domain/providers/wordlistProvider";
+import { WordleConfig, wordleConfig } from "@/app/domain/models/wordleConfig";
+import { BasicWordValidator, wordValidator } from "@/app/domain/services/wordValidator";
+import { BasicWordEvaluator, wordEvaluator } from "@/app/domain/services/wordEvaluator";
+import { ScoreCalculator, scoreCalculator } from "@/app/domain/services/scoreCalculator";
+import { GameBoard } from "./gameBoard";
 
 export type GameId = string; // UUID string
 
@@ -19,18 +19,18 @@ export class GameStoreProvider {
   private readonly scoreCalculator: ScoreCalculator;
   private readonly config: WordleConfig;
 
-  constructor(args: {
-    wordListProvider: WordListProvider;
-    wordValidator: BasicWordValidator;
-    wordEvaluator: BasicWordEvaluator;
-    scoreCalculator: ScoreCalculator;
-    config: WordleConfig;
-  }) {
-    this.wordListProvider = args.wordListProvider;
-    this.wordValidator = args.wordValidator;
-    this.wordEvaluator = args.wordEvaluator;
-    this.scoreCalculator = args.scoreCalculator;
-    this.config = args.config;
+  constructor(
+    wordListProvider: WordListProvider,
+    wordValidator: BasicWordValidator,
+    wordEvaluator: BasicWordEvaluator,
+    scoreCalculator: ScoreCalculator,
+    config: WordleConfig
+  ) {
+    this.wordListProvider = wordListProvider;
+    this.wordValidator = wordValidator;
+    this.wordEvaluator = wordEvaluator;
+    this.scoreCalculator = scoreCalculator;
+    this.config =config;
   }
 
   public createGame(): { gameId: GameId; board: GameBoard } {
@@ -73,3 +73,11 @@ function randomInt(min: number, max: number): number {
   const r = Math.floor(Math.random() * (max - min + 1)) + min;
   return r;
 }
+
+export const gameStoreProvider = new GameStoreProvider(
+    wordListProvider,
+    wordValidator,
+    wordEvaluator,
+    scoreCalculator,
+    wordleConfig
+)

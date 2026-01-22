@@ -48,3 +48,5 @@ export class BasicWordEvaluator {
     return new GuessResult(input, scores, isWin);
   }
 }
+
+export const wordEvaluator = new BasicWordEvaluator();

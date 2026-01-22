@@ -36,3 +36,5 @@ export class ScoreCalculator {
     return Math.max(max, currentScore);
   }
 }
+
+export const scoreCalculator = new ScoreCalculator();

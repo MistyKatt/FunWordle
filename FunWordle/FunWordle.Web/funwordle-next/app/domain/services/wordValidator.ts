@@ -1,7 +1,8 @@
 // src/domain/wordle/services/wordValidator.ts
 
 import { GuessValidationError, GuessValidationResult } from "@/app/domain/models/guess";
-import type { WordListProvider } from "@/app/domain/providers/wordlistProvider";
+import { WordListProvider, wordListProvider } from "@/app/domain/providers/wordlistProvider";
+import { ReadIntEnv } from "@/app/lib/util";
 
 export class BasicWordValidator {
   private readonly provider: WordListProvider;
@@ -37,3 +38,5 @@ export class BasicWordValidator {
     return GuessValidationResult.ok(guess);
   }
 }
+
+export const wordValidator = new BasicWordValidator(wordListProvider, ReadIntEnv("WORDLE_WORD_LENGTH",5));

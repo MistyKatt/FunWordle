@@ -1,6 +1,7 @@
 // src/server/wordList/fileWordListProvider.ts
 import fs from "node:fs";
 import path from "node:path";
+import { ReadIntEnv, ReadStringEnv } from "@/app/lib/util";
 
 export class WordListProvider {
   public readonly wordList: ReadonlySet<string>;
@@ -29,3 +30,8 @@ export class WordListProvider {
     Object.freeze(this); // optional: prevent accidental mutation of fields
   }
 }
+
+export const wordListProvider = new WordListProvider(
+    ReadStringEnv("WORDLE_FILEPATH", ""), 
+    ReadIntEnv("WORDLE_WORD_LENGTH",5)
+);
