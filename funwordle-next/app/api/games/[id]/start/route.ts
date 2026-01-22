@@ -11,9 +11,9 @@ const UUID_REGEX =
 
 export async function POST(
   _req: Request,
-  { params }: { params: { id: string } }
+   context: { params: Promise<{ id: string }> }
 ) {
-  const { id } = await params;
+  const { id } = await context.params;
 
   // 1️⃣ Invalid GUID → 400
   if (!UUID_REGEX.test(id)) {
