@@ -12,9 +12,9 @@ const UUID_REGEX =
 
 export async function GET(
   _req: Request,
-  { params }: { params: { id: string } }
+   context: { params: Promise<{ id: string }> }
 ) {
-  const { id } = await params;
+  const { id } = await context.params
 
   // 1) invalid guid -> 400
   if (!UUID_REGEX.test(id)) {
