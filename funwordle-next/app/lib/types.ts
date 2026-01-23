@@ -64,3 +64,9 @@ export interface GameStateDto {
 export interface GuessRequestDto {
   guess: string;
 }
+
+export type KeyInput =
+  | { kind: "backspace" }
+  | { kind: "enter" }
+  | { kind: "letter"; value: string }
+  | null;

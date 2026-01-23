@@ -1,5 +1,5 @@
 import { GameBoard } from "../domain/game/gameBoard";
-import { GameStateDto, GameStatusDto, GuessResultDto } from "./types";
+import { GameStateDto, GameStatusDto, GuessResultDto, KeyInput } from "./types";
 
 
 export function ReadIntEnv(name: string, fallback: number): number {
@@ -53,4 +53,14 @@ export function getErrorMessage(error: unknown, fallback: string) {
   if (error instanceof Error) return error.message;
   if (typeof error === 'string') return error;
   return fallback;
+}
+
+
+
+
+export function toKeyInputFromKeyboardEvent(e: KeyboardEvent): KeyInput | null {
+  if (e.key === "Backspace") return { kind: "backspace" };
+  if (e.key === "Enter") return { kind: "enter" };
+  if (/^[a-zA-Z]$/.test(e.key)) return { kind: "letter", value: e.key.toUpperCase() };
+  return null;
 }

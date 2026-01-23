@@ -2,10 +2,12 @@
 
 import { useEffect, useState } from 'react';
 import { getConfig, createGame, getGame, startGame, submitGuess, getAnswer } from './lib/api';
-import { AnswerDTO, GameStatusDto, type ConfigDto, type GameStateDto } from './lib/types';
+import { AnswerDTO, GameStatusDto, KeyInput, type ConfigDto, type GameStateDto } from './lib/types';
 import { GameBoard } from './components/GameBoard';
 import { RulesPanel } from './components/RulesPanel';
-import { getErrorMessage } from './lib/util';
+import { getErrorMessage, toKeyInputFromKeyboardEvent } from './lib/util';
+import { GameFooter } from './components/GameFooter';
+import { MobileTypingFocus } from './components/MobileTypeFocus';
 
 const WORD_LENGTH = 5; // fixed by game rules
 
@@ -34,6 +36,38 @@ export default function HomePage() {
     setIsShaking(true);
     setTimeout(() => setIsShaking(false), 300);
   };
+
+  async function applyKeyInput(input: KeyInput) {
+  if (!game || isLoading) return;
+  if (game.status !== GameStatusDto.InProgress || game.remainingGuesses <= 0) return;
+
+  if (input?.kind === "backspace") {
+    if (!currentGuess) return;
+    const newGuess = currentGuess.slice(0, -1);
+    await handleChangeCurrentGuess(newGuess);
+    return;
+  }
+
+  if (input?.kind === "enter") {
+    if (currentGuess.length === WORD_LENGTH) {
+      await handleSubmitCurrentGuess(currentGuess);
+    } else {
+      triggerShake(`Please enter exactly ${WORD_LENGTH} letters.`);
+    }
+    return;
+  }
+
+  // letter
+  if (currentGuess.length >= WORD_LENGTH) return;
+
+  const newGuess = (currentGuess + input?.value).slice(0, WORD_LENGTH);
+  await handleChangeCurrentGuess(newGuess);
+
+  if (newGuess.length === WORD_LENGTH) {
+    await handleSubmitCurrentGuess(newGuess);
+  }
+}
+
 
 
   useEffect(() => {
@@ -89,62 +123,6 @@ export default function HomePage() {
 
     void load();
   }, []);
-
-  useEffect(() => {
-  if (!game || isLoading) return;
-
-  const handler = (e: KeyboardEvent) => {
-    // ignore meta/combo keys
-    if (e.metaKey || e.ctrlKey || e.altKey) return;
-
-    // ignore typing in any <input> or <textarea> if you add them in future
-    const target = e.target as HTMLElement | null;
-    if (target && (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA')) {
-      return;
-    }
-
-    if (game.status !== GameStatusDto.InProgress || game.remainingGuesses <= 0) {
-      return;
-    }
-
-    // Backspace: delete last character
-    if (e.key === 'Backspace') {
-      e.preventDefault();
-      if (!currentGuess) return;
-      const newGuess = currentGuess.slice(0, -1);
-      void handleChangeCurrentGuess(newGuess);
-      return;
-    }
-
-    // Enter: submit current guess if length OK
-    if (e.key === 'Enter') {
-      e.preventDefault();
-      if (currentGuess.length === WORD_LENGTH) {
-        void handleSubmitCurrentGuess(currentGuess);
-      } else {
-        triggerShake(`Please enter exactly ${WORD_LENGTH} letters.`);
-      }
-      return;
-    }
-
-    // Letter keys: A-Z
-    if (/^[a-zA-Z]$/.test(e.key)) {
-      e.preventDefault();
-      if (currentGuess.length >= WORD_LENGTH) return;
-
-      const newGuess = (currentGuess + e.key.toUpperCase()).slice(0, WORD_LENGTH);
-      void handleChangeCurrentGuess(newGuess);
-
-      if (newGuess.length === WORD_LENGTH) {
-        void handleSubmitCurrentGuess(newGuess);
-      }
-    }
-  };
-
-  window.addEventListener('keydown', handler);
-  return () => window.removeEventListener('keydown', handler);
-}, [game, isLoading, currentGuess, game?.status, game?.remainingGuesses]);
-
 
   useEffect(() => {
     if (!timerActive) return;
@@ -280,76 +258,56 @@ export default function HomePage() {
 
   // AFTER
 return (
-  <main className="main-container">
-    <h1 className="page-title">FunWordle</h1>
+  <main>   
+    <MobileTypingFocus className={'main-container'}onKeyDown={(e)=>{
+    if (e.metaKey || e.ctrlKey || e.altKey) return;
+        const key = e.key;
+        let keyInput:KeyInput=null;
+        if (key === "Backspace") keyInput = { kind: "backspace" };
+        else if (key === "Enter") keyInput = { kind: "enter" };
+        else if (/^[a-zA-Z]$/.test(key)) keyInput = { kind: "letter", value: key.toUpperCase() };
 
-    <RulesPanel initiallyOpen />
+        if (!keyInput) return;
 
-    <div className={isShaking ? 'shake game-wrapper' : 'game-wrapper'}>
-      <GameBoard
-        game={{ ...game, remainingTimeSeconds: visualTimeLeft }}
-        maxGuessCount={config.maxGuessCount}
-        wordLength={WORD_LENGTH}
-        currentGuess={currentGuess}
-        onChangeCurrentGuess={handleChangeCurrentGuess}
-        onSubmitCurrentGuess={handleSubmitCurrentGuess}
-        isSubmitting={isSubmitting}
-        errorMessage={errorMessage}
-      />
-    </div>
-
-    <div className="bottom-bar">
-      <div className="mb-4">
-        <button
-          onClick={handleRestart}
-          disabled={isSubmitting}
-          className="primary-button"
-        >
-          New Game
-        </button>
+        e.preventDefault();
+        void applyKeyInput(keyInput);
+    }} enabled={game&&!isLoading}>
+      <h1 className="page-title">FunWordle</h1>
+      <RulesPanel initiallyOpen />
+      <div className={isShaking ? 'shake game-wrapper' : 'game-wrapper'}>
+        
+        <GameBoard
+          game={{ ...game, remainingTimeSeconds: visualTimeLeft }}
+          maxGuessCount={config.maxGuessCount}
+          wordLength={WORD_LENGTH}
+          currentGuess={currentGuess}
+          onChangeCurrentGuess={handleChangeCurrentGuess}
+          onSubmitCurrentGuess={handleSubmitCurrentGuess}
+          isSubmitting={isSubmitting}
+          errorMessage={errorMessage}
+        />
       </div>
 
-      {isFinished && (
-  <div className="game-footer space-y-4">
-    <p className="text-lg font-semibold text-red-600">
-      Game is finished. The answer is <span className="underline">{answer?.answer}</span>
-      <br />
-      Start a new one to play again.
-    </p>
-
-      {answer?.explanation && (
-        <div className="rounded-md border bg-gray-50 p-4">
-          <h3 className="text-md font-semibold mb-2">
-            Meaning of “{answer.explanation.word}”
-            {answer.explanation.phonetic && (
-              <span className="ml-2 text-sm text-gray-500">
-                {answer.explanation.phonetic}
-              </span>
-            )}
-          </h3>
-
-          <div className="max-h-48 overflow-y-auto pr-2 space-y-3">
-          {answer.explanation.meanings.map((meaning, idx) => (
-            <div key={idx}>
-              <div className="font-medium italic text-gray-700">
-                {meaning.partOfSpeech}
-              </div>
-              <ul className="list-disc list-inside text-sm text-gray-800">
-                {meaning.definitions.map((def, dIdx) => (
-                  <li key={dIdx}>{def.definition}</li>
-                ))}
-              </ul>
-            </div>
-          ))}
+      <div className="bottom-bar">
+        <div className="mb-4">
+          <button
+            onClick={handleRestart}
+            disabled={isSubmitting}
+            className="primary-button"
+          >
+            New Game
+          </button>
         </div>
-        </div>
-      )}
-  </div>
-)}
 
-    </div>
+        {<GameFooter isFinished={isFinished} answer={answer}/>}
+
+      </div>
+    </MobileTypingFocus>
+    
 
   </main>
 );
 
 }
+
+

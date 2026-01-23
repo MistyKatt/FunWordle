@@ -12,12 +12,7 @@
   --font-mono: var(--font-geist-mono);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
-}
+
 
 body {
   background: var(--background);
@@ -78,7 +73,7 @@ body {
 
 .rules-container {
   width: 100%;                 /* full-width container */
-  max-width: 500px;            /* match page width */
+  max-width: 500px;           /* match page width */
   margin-bottom: 1rem;
 }
 
