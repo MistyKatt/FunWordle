@@ -41,14 +41,15 @@ export const RulesPanel: React.FC<RulesPanelProps> = ({ initiallyOpen = false })
         <div ref={contentRef} className="rules-panel">
           <p>Touch or click input boxes to enable the input. Touch or click anywhere else to disable the input</p>
           <p>Guess the 5-letter word in the allowed number of tries.</p>
+          <p>The score will be 200 * number of hit + 50 * number of present. The remained time will be added as score if you win</p>
           <p>
             After each guess:
             <br />
-            • <strong>Green</strong>: correct letter in the correct position.
+            • <strong style={{color:'#22c55e'}}>Green</strong>: correct letter in the correct position.
             <br />
-            • <strong>Yellow</strong>: letter exists in the word but in a different position.
+            • <strong style={{color:'#eab308'}}>Yellow</strong>: letter exists in the word but in a different position.
             <br />
-            • <strong>Gray</strong>: letter is not in the word.
+            • <strong style={{color:'#4b5563'}}>Grey</strong>: letter is not in the word.
           </p>
         </div>
       </div>

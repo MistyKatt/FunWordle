@@ -60,13 +60,33 @@ export class GameStoreProvider {
 
     const gameId = crypto.randomUUID();
     this.games.set(gameId, board);
-
+    this.purgeGame();
     return { gameId, board };
   }
 
   public tryGet(id: GameId): GameBoard | null {
     return this.games.get(id) ?? null;
   }
+
+  private purgeGame(): void {
+  const MAX_SIZE = 1000;
+  const PURGE_COUNT = 200;
+
+  if (this.games.size < MAX_SIZE) return;
+
+  const keys = Array.from(this.games.keys());
+  const toDelete = Math.min(PURGE_COUNT, keys.length);
+
+  for (let i = 0; i < toDelete; i++) {
+    const index = randomInt(0, keys.length - 1);
+    const key = keys[index];
+
+    this.games.delete(key);
+
+    // Remove the key from the array to avoid deleting twice
+    keys.splice(index, 1);
+  }
+}
 }
 
 function randomInt(min: number, max: number): number {
