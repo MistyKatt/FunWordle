@@ -1,13 +1,14 @@
 'use client';
 
-import { useEffect, useState } from 'react';
-import { getConfig, createGame, getGame, startGame, submitGuess, getAnswer } from './lib/api';
-import { AnswerDTO, GameStatusDto, KeyInput, type ConfigDto, type GameStateDto } from './lib/types';
+import { useEffect, useRef, useState } from 'react';
+import { getConfig, createGame, getGame, startGame, submitGuess, getAnswer, getHint } from './lib/api';
+import { AnswerDTO, ExplanationDefinitionDto, GameStatusDto, KeyInput, type ConfigDto, type GameStateDto } from './lib/types';
 import { GameBoard } from './components/GameBoard';
 import { RulesPanel } from './components/RulesPanel';
 import { getErrorMessage, toKeyInputFromKeyboardEvent } from './lib/util';
 import { GameFooter } from './components/GameFooter';
 import { MobileTypingFocus } from './components/MobileTypeFocus';
+import { HintModal } from './components/HintModal';
 
 const WORD_LENGTH = 5; // fixed by game rules
 
@@ -16,6 +17,7 @@ export default function HomePage() {
   const [config, setConfig] = useState<ConfigDto | null>(null);
   const [game, setGame] = useState<GameStateDto | null>(null);
   const [answer, setAnswer] = useState<AnswerDTO | null>(null);
+  const [hint, setHint] = useState<ExplanationDefinitionDto | null>(null);
 
   const [currentGuess, setCurrentGuess] = useState('');
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
@@ -28,6 +30,8 @@ export default function HomePage() {
 
   const [isShaking, setIsShaking] = useState(false);
 
+  
+  
 
   const triggerShake = (message?: string) => {
     if (message) {
@@ -245,6 +249,30 @@ export default function HomePage() {
     }
   };
 
+  const requestHint = async ()=>{
+    
+  }
+
+  async function onHintClick() {
+    inputRef.current?.blur();
+    const storedId = typeof window !== 'undefined'
+          ? window.localStorage.getItem('wordle-game-id')
+          : null;
+      if (storedId) {
+        try {
+          const explanation = await getHint(storedId);
+          setHint(explanation);
+        }catch {
+          setHint({definition:"hint is not found :("});
+        }
+    }
+  }
+
+  function closeHint() {
+    setHint(null);
+  }
+
+  const inputRef = useRef<HTMLInputElement>(null);
   if (isLoading || !config || !game) {
     return (
       <main style={{ padding: 24 }}>
@@ -254,12 +282,13 @@ export default function HomePage() {
     );
   }
 
+ 
   const isFinished = game.status !== GameStatusDto.InProgress;
-
+  
   // AFTER
 return (
   <main>   
-    <MobileTypingFocus className={'main-container'}onKeyDown={(e)=>{
+    <MobileTypingFocus inputRef={inputRef} className={'main-container'}onKeyDown={(e)=>{
     if (e.metaKey || e.ctrlKey || e.altKey) return;
         const key = e.key;
         let keyInput:KeyInput=null;
@@ -275,8 +304,8 @@ return (
       <h1 className="page-title">FunWordle</h1>
       <RulesPanel initiallyOpen />
       <div className={isShaking ? 'shake game-wrapper' : 'game-wrapper'}>
-        
-        <GameBoard
+        <GameBoard 
+          inputRef={inputRef}
           game={{ ...game, remainingTimeSeconds: visualTimeLeft }}
           maxGuessCount={config.maxGuessCount}
           wordLength={WORD_LENGTH}
@@ -297,11 +326,19 @@ return (
           >
             New Game
           </button>
+          <button
+            onClick={onHintClick}
+            className="primary-button"
+            disabled={isFinished}
+          >
+            hint!
+          </button>
         </div>
 
         {<GameFooter isFinished={isFinished} answer={answer}/>}
 
       </div>
+      <HintModal hint={hint} onClose={closeHint} />
     </MobileTypingFocus>
     
 

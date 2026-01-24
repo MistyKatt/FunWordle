@@ -6,6 +6,7 @@ import { InfoBar } from './InfoBar';
 import { GuessRow } from './GuessRow';
 
 export interface GameBoardProps {
+  inputRef:React.RefObject<HTMLInputElement | null>
   game: GameStateDto;
   maxGuessCount: number;
   wordLength: number;
@@ -17,6 +18,7 @@ export interface GameBoardProps {
 }
 
 export const GameBoard: React.FC<GameBoardProps> = ({
+  inputRef,
   game,
   maxGuessCount,
   wordLength,
@@ -38,7 +40,7 @@ export const GameBoard: React.FC<GameBoardProps> = ({
   };
 
   return (
-    <div>
+    <div onPointerDownCapture={(e)=>{e.preventDefault(); inputRef.current?.focus()}}>
       <InfoBar
         score={game.score}
         remainingTimeSeconds={game.remainingTimeSeconds}

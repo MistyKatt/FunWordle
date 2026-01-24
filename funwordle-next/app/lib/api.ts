@@ -1,5 +1,5 @@
 // lib/api.ts
-import type { AnswerDTO, ConfigDto, GameStateDto } from './types';
+import type { AnswerDTO, ConfigDto, ExplanationDefinitionDto, GameStateDto } from './types';
 
 const API_BASE =
   process.env.NEXT_PUBLIC_API_BASE ?? '';
@@ -101,6 +101,22 @@ export async function getAnswer(gameId: string): Promise<AnswerDTO | null> {
   }
 
   return parseJson<AnswerDTO>(res);
+}
+
+export async function getHint(gameId: string): Promise<ExplanationDefinitionDto | null> {
+  const res = await fetch(buildUrl(`/api/games/${gameId}/hint`), {
+    method: 'GET',
+  });
+
+  if (res.status === 404) {
+    return null;
+  }
+
+  if (!res.ok) {
+    throw new Error(`Failed to get game answer: ${res.status}`);
+  }
+
+  return parseJson<ExplanationDefinitionDto>(res);
 }
 
 /**

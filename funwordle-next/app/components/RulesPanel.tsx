@@ -39,7 +39,7 @@ export const RulesPanel: React.FC<RulesPanelProps> = ({ initiallyOpen = false })
         style={{ maxHeight }}
       >
         <div ref={contentRef} className="rules-panel">
-          <p>Touch or click anywhere on the screen to type the guess.</p>
+          <p>Touch or click input boxes to enable the input. Touch or click anywhere else to disable the input</p>
           <p>Guess the 5-letter word in the allowed number of tries.</p>
           <p>
             After each guess:

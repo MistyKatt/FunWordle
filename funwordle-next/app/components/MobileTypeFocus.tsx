@@ -1,22 +1,24 @@
 import React, { useRef } from "react";
 
 export function MobileTypingFocus({
+  inputRef,
   className,
   enabled = true,
   onKeyDown,
   children,
 }: {
+  inputRef:React.RefObject<HTMLInputElement | null>
   className:string;
   enabled?: boolean;
   onKeyDown?: (e: React.KeyboardEvent<HTMLInputElement>) => void;
   onTextInput?: (text: string) => void; // for mobile reliability
   children: React.ReactNode;
 }) {
-  const inputRef = useRef<HTMLInputElement>(null);
 
-  const focus = () => {
+  const blur = () => {
     if (!enabled) return;
-    inputRef.current?.focus();
+    console.log("blur");
+    inputRef.current?.blur();
   };
 
   return (
@@ -24,7 +26,7 @@ export function MobileTypingFocus({
       className={className}
       onPointerDownCapture={(e) => {
         e.preventDefault();
-        focus();
+        blur();
       }}
     >
       <input
