@@ -249,10 +249,6 @@ export default function HomePage() {
     }
   };
 
-  const requestHint = async ()=>{
-    
-  }
-
   async function onHintClick() {
     inputRef.current?.blur();
     const storedId = typeof window !== 'undefined'

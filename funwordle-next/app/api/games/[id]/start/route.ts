@@ -1,7 +1,8 @@
 // app/api/games/[id]/start/route.ts
 import { NextResponse } from "next/server";
-import { gameStoreProvider } from "@/app/domain/game/gameStoreProvider";
-import { toGameStateDto } from "@/app/lib/util";
+import { gameProvider } from "@/app/domain/factory/gameStoreFactory";
+import { saveToRedis, toGameStateDto } from "@/app/lib/util";
+import { GameStateRedis } from "@/app/lib/types";
 
 export const runtime = "nodejs";
 
@@ -24,7 +25,7 @@ export async function POST(
   }
 
   // 2️⃣ GUID but game not found → 404
-  const board = gameStoreProvider.tryGet(id);
+  const board = await gameProvider.tryGet(id);
   if (!board) {
     return NextResponse.json(
       { error: "Game not found" },
@@ -34,6 +35,10 @@ export async function POST(
 
   // 3️⃣ Found → initialize + return state
   board.initialize();
+  if(!(process.env.WORDLE_RUNNING_ENV === 'local')){
+  const redisState = board.toGameStateRedis();
+  await saveToRedis<GameStateRedis>(`game:${id}`, redisState, { ex: 3600 })
+  }
   const dto = toGameStateDto(id, board);
 
   return NextResponse.json(dto, { status: 200 });

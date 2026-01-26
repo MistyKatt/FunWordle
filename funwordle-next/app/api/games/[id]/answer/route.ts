@@ -1,6 +1,6 @@
 // app/api/games/[id]/answer/route.ts
 import { NextResponse } from "next/server";
-import { gameStoreProvider } from "@/app/domain/game/gameStoreProvider";
+import { gameProvider } from "@/app/domain/factory/gameStoreFactory";
 import type { AnswerDTO } from "@/app/lib/types";
 import { fetchExplanations } from "@/app/domain/client/dictionaryApiClient";
 
@@ -25,7 +25,7 @@ export async function GET(
   }
 
   // 2) not found -> 404
-  const board = gameStoreProvider.tryGet(id);
+  const board = await gameProvider.tryGet(id);
   if (!board) {
     return NextResponse.json(
       { error: "GameNotFound" },

@@ -1,5 +1,8 @@
-import { GameBoard } from "../domain/game/gameBoard";
-import { GameStateDto, GameStatusDto, GuessResultDto, KeyInput } from "./types";
+import { SetCommandOptions } from "@upstash/redis";
+import { GameBoard, GuessHistoryEntry } from "../domain/game/gameBoard";
+import { GuessResult } from "../domain/models/guess";
+import { GameStateDto, GameStateRedis, GameStatusDto, GuessResultDto, KeyInput, LetterResultDto } from "./types";
+import { redis } from "./redis";
 
 
 export function ReadIntEnv(name: string, fallback: number): number {
@@ -25,7 +28,7 @@ export function toGameStateDto(
 ): GameStateDto {
   let status: GameStatusDto = GameStatusDto.InProgress;
 
-  if (board.lastGuess?.isWin === true) {
+  if (board.isWinning() === true) {
     status = GameStatusDto.Win;
   } else if (board.count <= 0) {
     status = GameStatusDto.Lose;
@@ -48,6 +51,43 @@ export function toGameStateDto(
     status,
   };
 }
+
+export function toGuessResult(guess: GuessResultDto):GuessResult{
+    return new GuessResult(
+      guess.guess,
+      guess.letters.map(l=>{
+        return l.match
+      }),
+      false
+    )
+  }
+
+export function toGuessResultDto(guess: GuessHistoryEntry): GuessResultDto{
+  const guessStr:string = guess.guess.guess;
+  const letterMatch: LetterResultDto[] = [];
+  for(let i = 0;i< guessStr.length; i++){
+    letterMatch.push({
+      letter:guessStr[i],
+      match:guess.guess.scores[i]
+    })
+  }
+  return {
+    guess:guessStr,
+    letters:letterMatch
+  }
+
+}
+
+export async function saveToRedis<T>(key: string, val: T, opts?: SetCommandOptions){
+  await redis.set(key, val, opts);
+}
+
+export async function getFromRedis<T>(key: string){
+    const result = await redis.get<T>(key);
+    if (!result) return null;
+    return result;
+}
+
 
 export function getErrorMessage(error: unknown, fallback: string) {
   if (error instanceof Error) return error.message;

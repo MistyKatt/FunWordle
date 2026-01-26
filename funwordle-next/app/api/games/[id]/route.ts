@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
-import { gameStoreProvider } from "@/app/domain/game/gameStoreProvider";
-import { toGameStateDto } from "@/app/lib/util";
-import { GuessRequestDto } from "@/app/lib/types";
+import { gameProvider } from "@/app/domain/factory/gameStoreFactory";
+import { saveToRedis, toGameStateDto } from "@/app/lib/util";
+import { GameStateRedis, GuessRequestDto } from "@/app/lib/types";
 import { InvalidGuessError } from "@/app/domain/game/gameBoard";
 
 export const runtime = "nodejs";
@@ -25,7 +25,7 @@ export async function GET(
   }
 
   // 2. GUID but game not found → 404
-  const board = gameStoreProvider.tryGet(id);
+  const board = await gameProvider.tryGet(id);
   if (!board) {
     return NextResponse.json(
       { error: "Game not found" },
@@ -53,7 +53,7 @@ export async function POST(
   }
 
   // 2) valid guid but game not found -> 404
-  const board = gameStoreProvider.tryGet(id);
+  const board = await gameProvider.tryGet(id);
   if (!board) {
     return NextResponse.json(
       { error: "GameNotFound" },
@@ -100,7 +100,10 @@ export async function POST(
     // Unexpected error -> 500
     throw err;
   }
-
+  if(!(process.env.WORDLE_RUNNING_ENV === 'local')){
+  const redisState = board.toGameStateRedis();
+  await saveToRedis<GameStateRedis>(`game:${id}`, redisState, { ex: 3600 })
+  }
   // 6) success -> 200 updated state
   const dto = toGameStateDto(id, board);
   return NextResponse.json(dto, { status: 200 });

@@ -1,11 +1,13 @@
 // src/domain/wordle/game/gameBoard.ts
 
 import { GuessResult, GuessValidationError } from "@/app/domain/models/guess";
-import type { WordleConfig } from "@/app/domain/models/wordleConfig";
-import type { WordListProvider } from "@/app/domain/providers/wordlistProvider";
-import { BasicWordEvaluator } from "@/app/domain/services/wordEvaluator";
-import { BasicWordValidator } from "@/app/domain/services//wordValidator";
-import { ScoreCalculator } from "@/app/domain/services/scoreCalculator";
+import { wordleConfig, type WordleConfig } from "@/app/domain/models/wordleConfig";
+import { wordListProvider, WordListProvider } from "@/app/domain/providers/wordlistProvider";
+import { BasicWordEvaluator, wordEvaluator} from "@/app/domain/services/wordEvaluator";
+import { BasicWordValidator, wordValidator, } from "@/app/domain/services//wordValidator";
+import { scoreCalculator, ScoreCalculator } from "@/app/domain/services/scoreCalculator";
+import { GameStateRedis, GuessResultDto } from "@/app/lib/types";
+import { toGuessResult, toGuessResultDto } from "@/app/lib/util";
 
 /** Equivalent to your GuessHistoryEntry. */
 export class GuessHistoryEntry {
@@ -42,7 +44,6 @@ export class GameBoard {
   private scoreValue = 0;
   private remainingCount: number;
   private readonly guessesValue: GuessHistoryEntry[] = [];
-  private lastGuessValue: GuessResult | null = null;
 
   private readonly wordValidator: BasicWordValidator;
   private readonly wordEvaluator: BasicWordEvaluator;
@@ -51,16 +52,13 @@ export class GameBoard {
   private readonly config: WordleConfig;
 
   private answer: string;
-  private maxScore = 0;
+  private isWin: boolean = false;
 
   // Node-friendly stopwatch: store start timestamp in ms.
   private startedAtMs: number | null = null;
-
-  // Store as Set for membership checks / potential UI hints.
-  public readonly wordSet: ReadonlySet<string>;
+  private endAtMs: number | null = null;
 
   constructor(args: {
-    wordSet: ReadonlySet<string>;
     wordValidator: BasicWordValidator;
     wordEvaluator: BasicWordEvaluator;
     wordListProvider: WordListProvider;
@@ -68,7 +66,6 @@ export class GameBoard {
     config: WordleConfig;
     answer: string;
   }) {
-    this.wordSet = args.wordSet;
     this.wordValidator = args.wordValidator;
     this.wordEvaluator = args.wordEvaluator;
     this.wordListProvider = args.wordListProvider;
@@ -92,25 +89,12 @@ export class GameBoard {
     return this.remainingCount;
   }
 
-  public get lastGuess(): GuessResult | null {
-    return this.lastGuessValue;
-  }
-
-  public get isFinished(): boolean {
-    return (
-      this.remainingCount <= 0 ||
-      (this.guessesValue.length > 0 && this.lastGuessValue?.isWin === true)
-    );
-  }
-
   /** Start/restart the game (equivalent to Initialize). */
   public initialize(): void {
     this.scoreValue = 0;
-    this.maxScore = 0;
-    this.lastGuessValue = null;
     this.remainingCount = this.config.maxGuessCount;
     this.guessesValue.length = 0;
-
+    this.isWin = false;
     this.resetAnswer();
     this.startedAtMs = Date.now();
   }
@@ -121,7 +105,7 @@ export class GameBoard {
    */
   public remainedTime(): number {
     if (this.startedAtMs == null) return this.config.initialTimeSeconds;
-
+    if (this.endAtMs !== null) return this.endAtMs;
     const elapsedSec = Math.floor((Date.now() - this.startedAtMs) / 1000);
     return Math.max(0, this.config.initialTimeSeconds - elapsedSec);
   }
@@ -131,8 +115,17 @@ export class GameBoard {
    * In Node, "stop" just freezes by clearing startedAtMs.
    */
   public getAnswer(): string {
-    this.startedAtMs = null;
     return this.answer;
+  }
+
+  public isFinished():boolean {
+    if(this.isWin||this.remainingCount<=0)
+      return true;
+    return false;
+  }
+
+  public isWinning(): boolean{
+    return this.isWin;
   }
 
   /**
@@ -154,21 +147,63 @@ export class GameBoard {
       this.answer
     );
 
-    this.lastGuessValue = result;
-
+    if(result.isWin === true)
+    {
+      this.isWin = true;  
+    }   
     const entry = new GuessHistoryEntry(result, this.guessesValue.length + 1);
     this.guessesValue.push(entry);
     this.remainingCount--;
-
     const remained = this.remainedTime();
     // NOTE: This preserves your original semantics (even though the variable name was "time").
     // If you intended "time used", you'd compute used = initial - remained.
-    this.scoreValue = this.scoreCalculator.calculate(this.maxScore, remained, result);
-    this.maxScore = Math.max(this.scoreValue, this.maxScore);
-
+    this.scoreValue = this.scoreCalculator.calculate(this.scoreValue, remained, result);
+    if(this.isFinished())
+      this.endAtMs = Date.now();
     return result;
   }
 
+  public static toGameBoard(gameState: GameStateRedis) : GameBoard {
+  
+      const board = new GameBoard({
+        wordValidator: wordValidator,
+        wordEvaluator: wordEvaluator,
+        wordListProvider: wordListProvider,
+        scoreCalculator: scoreCalculator,
+        config: wordleConfig,
+        answer: gameState.answer
+      });
+      board.startedAtMs = gameState.startedAtMs;
+      board.remainingCount = gameState.remainingGuesses;
+      let guessHistory:GuessHistoryEntry[] = gameState.guesses.map((g, index)=>{
+        return new GuessHistoryEntry(
+          toGuessResult(g),
+          index+1
+        )
+      });
+      board.guessesValue.push(...guessHistory);
+      board.isWin = gameState.isWin;
+      board.endAtMs = gameState.endAtMs;    
+      board.scoreValue = gameState.scoreValue;
+      return board;
+  }
+
+  public toGameStateRedis(): GameStateRedis{
+    const guesses: GuessResultDto[] = this.guesses.map(g=>{
+      return toGuessResultDto(g);
+    })
+    return {
+      scoreValue:this.score,
+      remainingGuesses:this.count,
+      guesses:guesses,
+      startedAtMs:this.startedAtMs,
+      endAtMs:this.endAtMs,
+      answer:this.answer,
+      isWin:this.isWin
+    }
+  }
+
+  
   // --- private helpers ---
   private resetAnswer(): void {
     // WordListProvider uses Set, but we need an index pick. Convert once per reset.

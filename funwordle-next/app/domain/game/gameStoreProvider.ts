@@ -7,12 +7,19 @@ import { BasicWordValidator, wordValidator } from "@/app/domain/services/wordVal
 import { BasicWordEvaluator, wordEvaluator } from "@/app/domain/services/wordEvaluator";
 import { ScoreCalculator, scoreCalculator } from "@/app/domain/services/scoreCalculator";
 import { GameBoard } from "./gameBoard";
+import { IGameProvider } from "./IGameStore";
 
 export type GameId = string; // UUID string
 
-export class GameStoreProvider {
-  private readonly games = new Map<GameId, GameBoard>();
+type GameEntry = {
+  board: GameBoard;
+  expiresAtMs: number; // epoch ms
+};
 
+export class GameStoreProvider implements IGameProvider{
+  private readonly games = new Map<GameId, GameEntry>();
+  private readonly ttlMs = 60 * 60 * 1000;
+  private readonly MAX_SIZE = 1000;
   private readonly wordListProvider: WordListProvider;
   private readonly wordValidator: BasicWordValidator;
   private readonly wordEvaluator: BasicWordEvaluator;
@@ -33,7 +40,7 @@ export class GameStoreProvider {
     this.config =config;
   }
 
-  public createGame(): { gameId: GameId; board: GameBoard } {
+  public async createGame(): Promise<{ gameId: GameId; board: GameBoard }> {
     const allWords = Array.from(this.wordListProvider.wordList);
     if (allWords.length === 0) {
       throw new Error("No valid words available for game creation.");
@@ -41,11 +48,7 @@ export class GameStoreProvider {
 
     const answer = allWords[randomInt(0, allWords.length - 1)];
 
-    // Keep a Set copy, as you did with HashSet<string>
-    const wordSet = new Set(allWords);
-
     const board = new GameBoard({
-      wordSet,
       wordValidator: this.wordValidator,
       wordEvaluator: this.wordEvaluator,
       wordListProvider: this.wordListProvider,
@@ -54,40 +57,48 @@ export class GameStoreProvider {
       answer,
     });
 
-    // In C# you created the board then stored it; you didn't call Initialize().
-    // If you want stopwatch to start immediately, call board.initialize() here.
-    board.initialize();
-
     const gameId = crypto.randomUUID();
-    this.games.set(gameId, board);
-    this.purgeGame();
+    const now = Date.now();
+    this.games.set(gameId, {
+      board,
+      expiresAtMs: now + this.ttlMs,
+    });
+    this.purgeGame(now);
     return { gameId, board };
   }
 
-  public tryGet(id: GameId): GameBoard | null {
-    return this.games.get(id) ?? null;
+  public async tryGet(id: GameId): Promise<GameBoard | null> {
+    const entry = this.games.get(id);
+    if (!entry) return null;
+
+    if (entry.expiresAtMs <= Date.now()) {
+      this.games.delete(id);
+      return null;
+    }
+
+    return entry.board;
   }
 
-  private purgeGame(): void {
-  const MAX_SIZE = 1000;
-  const PURGE_COUNT = 200;
+  public async purgeGame(nowMs: number = Date.now()): Promise<void> {
 
-  if (this.games.size < MAX_SIZE) return;
+    for (const [id, entry] of this.games) {
+      if (entry.expiresAtMs <= nowMs) {
+        this.games.delete(id);
+      }
+    }
 
-  const keys = Array.from(this.games.keys());
-  const toDelete = Math.min(PURGE_COUNT, keys.length);
+    if (this.games.size <= this.MAX_SIZE) return;
 
-  for (let i = 0; i < toDelete; i++) {
-    const index = randomInt(0, keys.length - 1);
-    const key = keys[index];
+    const entries = Array.from(this.games.entries());
+    entries.sort((a, b) => a[1].expiresAtMs - b[1].expiresAtMs);
 
-    this.games.delete(key);
-
-    // Remove the key from the array to avoid deleting twice
-    keys.splice(index, 1);
+    const excess = this.games.size - this.MAX_SIZE;
+    for (let i = 0; i < excess; i++) {
+      this.games.delete(entries[i][0]);
+    }
   }
 }
-}
+
 
 function randomInt(min: number, max: number): number {
   const r = Math.floor(Math.random() * (max - min + 1)) + min;

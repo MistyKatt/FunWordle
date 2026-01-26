@@ -60,6 +60,16 @@ export interface GameStateDto {
   status: GameStatusDto;
 }
 
+export type GameStateRedis = {
+  scoreValue: number;
+  remainingGuesses: number;
+  guesses: GuessResultDto[];
+  startedAtMs: number|null;
+  endAtMs: number|null;
+  answer:string;
+  isWin:boolean;
+}
+
 // Matches C# GuessRequestDto
 export interface GuessRequestDto {
   guess: string;
