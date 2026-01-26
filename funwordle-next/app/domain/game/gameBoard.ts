@@ -159,7 +159,7 @@ export class GameBoard {
     // If you intended "time used", you'd compute used = initial - remained.
     this.scoreValue = this.scoreCalculator.calculate(this.scoreValue, remained, result);
     if(this.isFinished())
-      this.endAtMs = Date.now();
+      this.endAtMs = this.remainedTime();
     return result;
   }
 
